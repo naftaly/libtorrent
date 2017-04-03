@@ -278,7 +278,7 @@ namespace libtorrent {
 		}
 #endif
 
-		std::shared_ptr<storage_interface> storage = j->storage;
+		std::shared_ptr<default_storage> storage = j->storage;
 
 		// TODO: 4 instead of doing this. pass in the settings to each storage_interface
 		// call. Each disk thread could hold its most recent understanding of the settings
@@ -549,10 +549,9 @@ namespace libtorrent {
 
 		// if we encounter any read jobs in the queue, we need to clear the
 		// "outstanding_read" flag on its piece, as we abort the job
-		std::vector<std::pair<storage_interface*, piece_index_t> > pieces;
+		std::vector<std::pair<default_storage*, piece_index_t> > pieces;
 
-		storage_interface* to_delete = m_torrents[storage].get();
-
+		default_storage* to_delete = m_torrents[storage].get();
 		while (qj)
 		{
 			disk_io_job* next = qj->next;
@@ -621,7 +620,7 @@ namespace libtorrent {
 		// remove outstanding hash jobs belonging to this torrent
 		std::unique_lock<std::mutex> l2(m_job_mutex);
 
-		std::shared_ptr<storage_interface> st
+		std::shared_ptr<default_storage> st
 			= m_torrents[storage]->shared_from_this();
 		disk_io_job* qj = m_hash_io_jobs.m_queued_jobs.get_all();
 		jobqueue_t to_abort;
@@ -1151,7 +1150,7 @@ namespace libtorrent {
 					std::unique_lock<std::mutex> l2(m_need_tick_mutex);
 					while (!m_need_tick.empty() && m_need_tick.front().first < now)
 					{
-						std::shared_ptr<storage_interface> st = m_need_tick.front().second.lock();
+						std::shared_ptr<default_storage> st = m_need_tick.front().second.lock();
 						m_need_tick.erase(m_need_tick.begin());
 						if (st)
 						{
