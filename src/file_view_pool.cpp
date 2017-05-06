@@ -64,7 +64,7 @@ namespace libtorrent { namespace aux {
 		std::unique_lock<std::mutex> l(m_mutex);
 
 		TORRENT_ASSERT(is_complete(p));
-		auto const i = m_files.find(std::make_pair(st, file_index));
+		auto const i = m_files.find({st, file_index});
 		if (i != m_files.end())
 		{
 			lru_map_entry& e = i->second;
@@ -94,11 +94,13 @@ namespace libtorrent { namespace aux {
 			remove_oldest(l);
 		}
 
+		l.unlock();
 		lru_map_entry e(fs.file_path(file_index, p), m
 			, static_cast<std::size_t>(fs.file_size(file_index)));
 		auto ret = e.mapping->view();
-		m_files.insert(std::make_pair(std::make_pair(st, file_index), std::move(e)));
 
+		l.lock();
+		m_files.insert(std::make_pair(std::make_pair(st, file_index), std::move(e)));
 		return ret;
 	}
 
