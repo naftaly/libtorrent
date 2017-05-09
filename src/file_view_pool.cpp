@@ -64,27 +64,33 @@ namespace libtorrent { namespace aux {
 		std::unique_lock<std::mutex> l(m_mutex);
 
 		TORRENT_ASSERT(is_complete(p));
-		auto const i = m_files.find({st, file_index});
-		if (i != m_files.end())
+		auto& key_view = m_files.get<0>();
+		auto const i = key_view.find(file_id{st, file_index});
+		if (i != key_view.end())
 		{
-			lru_map_entry& e = i->second;
-			e.last_use = aux::time_now();
-
-			// make sure the write bit is set if we asked for it
-			// it's OK to use a read-write file if we just asked for read. But if
-			// we asked for write, the file we serve back must be opened in write
-			// mode
-			if ((e.mode & open_mode_t::write) == 0 && (m & open_mode_t::write))
+			key_view.modify(i, [&](file_entry& e)
 			{
-				defer_destruction = std::move(e.mapping);
-				e.mapping = std::make_shared<file_mapping>(
-					file_handle(fs.file_path(file_index, p)
-						, static_cast<std::size_t>(fs.file_size(file_index)), m), m
-					, static_cast<std::size_t>(fs.file_size(file_index)));
-				e.mode = m;
 				e.last_use = aux::time_now();
-			}
-			return e.mapping->view();
+
+				// make sure the write bit is set if we asked for it
+				// it's OK to use a read-write file if we just asked for read. But if
+				// we asked for write, the file we serve back must be opened in write
+				// mode
+				if ((e.mode & open_mode_t::write) == 0 && (m & open_mode_t::write))
+				{
+					defer_destruction = std::move(e.mapping);
+					e.mapping = std::make_shared<file_mapping>(
+						file_handle(fs.file_path(file_index, p)
+							, static_cast<std::size_t>(fs.file_size(file_index)), m), m
+						, static_cast<std::size_t>(fs.file_size(file_index)));
+					e.mode = m;
+				}
+			});
+
+			auto& lru_view = m_files.get<1>();
+			lru_view.relocate(m_files.project<1>(i), lru_view.begin());
+
+			return i->mapping->view();
 		}
 
 		if (int(m_files.size()) >= m_size - 1)
@@ -95,12 +101,13 @@ namespace libtorrent { namespace aux {
 		}
 
 		l.unlock();
-		lru_map_entry e(fs.file_path(file_index, p), m
+		file_entry e({st, file_index}, fs.file_path(file_index, p), m
 			, static_cast<std::size_t>(fs.file_size(file_index)));
 		auto ret = e.mapping->view();
 
 		l.lock();
-		m_files.insert(std::make_pair(std::make_pair(st, file_index), std::move(e)));
+		auto& key_view2 = m_files.get<0>();
+		key_view2.insert(std::move(e));
 		return ret;
 	}
 
@@ -126,14 +133,15 @@ namespace libtorrent { namespace aux {
 		{
 			std::unique_lock<std::mutex> l(m_mutex);
 
-			auto const start = m_files.lower_bound(std::make_pair(st, file_index_t(0)));
-			auto const end = m_files.upper_bound(std::make_pair(st
-				, std::numeric_limits<file_index_t>::max()));
+			auto& key_view = m_files.get<0>();
+			auto const start = key_view.lower_bound(file_id{st, file_index_t(0)});
+			auto const end = key_view.upper_bound(file_id{st, std::numeric_limits<file_index_t>::max()});
 
 			for (auto i = start; i != end; ++i)
 			{
-				ret.push_back({i->first.second, to_file_open_mode(i->second.mode)
-					, i->second.last_use});
+				ret.push_back({i->key.second
+					, to_file_open_mode(i->mode)
+					, i->last_use});
 			}
 		}
 		return ret;
@@ -142,14 +150,12 @@ namespace libtorrent { namespace aux {
 	// TODO: make this not be a linear scan
 	std::shared_ptr<file_mapping> file_view_pool::remove_oldest(std::unique_lock<std::mutex>&)
 	{
-		using value_type = decltype(m_files)::value_type;
-		auto const i = std::min_element(m_files.begin(), m_files.end()
-			, [] (value_type const& lhs, value_type const& rhs)
-				{ return lhs.second.last_use < rhs.second.last_use; });
-		if (i == m_files.end()) return {};
+		auto& lru_view = m_files.get<1>();
+		if (lru_view.size() == 0) return {};
 
-		auto mapping = std::move(i->second.mapping);
-		m_files.erase(i);
+		auto mapping = std::move(lru_view.back().mapping);
+		lru_view.pop_back();
+
 		// closing a file may be long running operation (mac os x)
 		// let the caller destruct it once it has released the mutex
 		return mapping;
@@ -159,11 +165,12 @@ namespace libtorrent { namespace aux {
 	{
 		std::unique_lock<std::mutex> l(m_mutex);
 
-		auto const i = m_files.find(std::make_pair(st, file_index));
-		if (i == m_files.end()) return;
+		auto& key_view = m_files.get<0>();
+		auto const i = key_view.find(file_id{st, file_index});
+		if (i == key_view.end()) return;
 
-		auto mapping = std::move(i->second.mapping);
-		m_files.erase(i);
+		auto mapping = std::move(i->mapping);
+		key_view.erase(i);
 
 		// closing a file may take a long time (mac os x), so make sure
 		// we're not holding the mutex
@@ -174,9 +181,12 @@ namespace libtorrent { namespace aux {
 	// storage, or all if none is specified.
 	void file_view_pool::release()
 	{
+		files_container defer_destruction;
 		std::unique_lock<std::mutex> l(m_mutex);
-		m_files.clear();
+		m_files.swap(defer_destruction);
 		l.unlock();
+
+		// the files and mappings will be destructed here, not holding the mutex
 	}
 
 	void file_view_pool::release(storage_index_t const st)
@@ -185,19 +195,19 @@ namespace libtorrent { namespace aux {
 
 		std::unique_lock<std::mutex> l(m_mutex);
 
-		auto const begin = m_files.lower_bound(std::make_pair(st, file_index_t(0)));
-		auto const end = m_files.upper_bound(std::make_pair(st
-				, std::numeric_limits<file_index_t>::max()));
+		auto& key_view = m_files.get<0>();
+		auto const begin = key_view.lower_bound(file_id{st, file_index_t(0)});
+		auto const end = key_view.upper_bound(file_id{st, std::numeric_limits<file_index_t>::max()});
 
 		for (auto it = begin; it != end; ++it)
-			defer_destruction.emplace_back(std::move(it->second.mapping));
+			defer_destruction.emplace_back(std::move(it->mapping));
 
-		if (begin != end) m_files.erase(begin, end);
+		if (begin != end) key_view.erase(begin, end);
 		l.unlock();
 		// the files are closed here while the lock is not held
 	}
 
-	void file_view_pool::resize(int size)
+	void file_view_pool::resize(int const size)
 	{
 		std::unique_lock<std::mutex> l(m_mutex);
 

@@ -50,6 +50,14 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "libtorrent/aux_/disable_warnings_push.hpp"
 auto const map_failed = MAP_FAILED;
+
+#define BOOST_BIND_NO_PLACEHOLDERS
+
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index/sequenced_index.hpp>
+#include <boost/multi_index/member.hpp>
+
 #include "libtorrent/aux_/disable_warnings_pop.hpp"
 
 namespace libtorrent {
@@ -61,6 +69,8 @@ namespace aux {
 
 	// for now
 	using byte = char;
+
+	namespace mi = boost::multi_index;
 
 	enum open_mode_t : std::uint32_t
 	{ write = 1, no_cache = 2, truncate = 4};
@@ -272,22 +282,37 @@ namespace aux {
 
 		int m_size;
 
-		struct lru_map_entry
+		using file_id = std::pair<storage_index_t, file_index_t>;
+
+		struct file_entry
 		{
-			lru_map_entry(string_view name
+			file_entry(file_id k
+				, string_view name
 				, std::uint32_t const m
 				, std::size_t const size)
-				: mapping(std::make_shared<file_mapping>(file_handle(name, size, m), m, size))
+				: key(k)
+				, mapping(std::make_shared<file_mapping>(file_handle(name, size, m), m, size))
 				, mode(m)
 			{}
 
+			file_id key;
 			std::shared_ptr<file_mapping> mapping;
 			time_point last_use{aux::time_now()};
 			std::uint32_t mode = 0;
 		};
 
+		using files_container = mi::multi_index_container<
+			file_entry,
+			mi::indexed_by<
+			// look up files by (torrent, file) key
+			mi::ordered_unique<mi::member<file_entry, file_id, &file_entry::key>>,
+			// look up files by least recently used
+			mi::sequenced<>
+			>
+		>;
+
 		// maps storage pointer, file index pairs to the lru entry for the file
-		std::map<std::pair<storage_index_t, file_index_t>, lru_map_entry> m_files;
+		files_container m_files;
 		mutable std::mutex m_mutex;
 	};
 }
