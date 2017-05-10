@@ -324,14 +324,14 @@ using lt::torrent_status;
 
 FILE* g_log_file = nullptr;
 
-int peer_index(lt::tcp::endpoint addr, std::vector<lt::peer_info> const& peers)
+int peer_flags(lt::tcp::endpoint addr, std::vector<lt::peer_info> const& peers)
 {
 	using namespace lt;
 	std::vector<peer_info>::const_iterator i = std::find_if(peers.begin(), peers.end()
 		, [&addr](peer_info const& pi) { return pi.ip == addr; });
-	if (i == peers.end()) return -1;
+	if (i == peers.end()) return 0;
 
-	return int(i - peers.begin());
+	return i->flags;
 }
 
 // returns the number of lines printed
@@ -945,31 +945,29 @@ void pop_alerts(torrent_view& view, session_view& ses_view
 	}
 }
 
-void print_piece(lt::partial_piece_info const* pp
+void print_piece(lt::partial_piece_info const& pp
 	, std::vector<lt::peer_info> const& peers
 	, std::string& out)
 {
 	using namespace lt;
 
 	char str[1024];
-	int const piece = static_cast<int>(pp->piece_index);
-	int const num_blocks = pp->blocks_in_piece;
+	int const piece = static_cast<int>(pp.piece_index);
+	int const num_blocks = pp.blocks_in_piece;
 
 	std::snprintf(str, sizeof(str), "%5d:[", piece);
 	out += str;
 	string_view last_color;
 	for (int j = 0; j < num_blocks; ++j)
 	{
-		int const index = pp ? peer_index(pp->blocks[j].peer(), peers) % 36 : -1;
+		bool const snubbed = (peer_flags(pp.blocks[j].peer(), peers) & peer_info::snubbed) != 0;
 		char const* chr = " ";
-		bool const snubbed = index >= 0 ? ((peers[index].flags & peer_info::snubbed) != 0) : false;
-
 		char const* color = "";
 
-		if (pp->blocks[j].bytes_progress > 0
-				&& pp->blocks[j].state == block_info::requested)
+		if (pp.blocks[j].bytes_progress > 0
+				&& pp.blocks[j].state == block_info::requested)
 		{
-			if (pp->blocks[j].num_peers > 1) color = esc("0;1");
+			if (pp.blocks[j].num_peers > 1) color = esc("0;1");
 			else color = snubbed ? esc("0;35") : esc("0;33");
 
 #ifndef TORRENT_WINDOWS
@@ -977,15 +975,15 @@ void print_piece(lt::partial_piece_info const* pp
 				"\u2581", "\u2582", "\u2583", "\u2584",
 				"\u2585", "\u2586", "\u2587", "\u2588"
 			};
-			chr = progress[pp->blocks[j].bytes_progress * 8 / pp->blocks[j].block_size];
+			chr = progress[pp.blocks[j].bytes_progress * 8 / pp.blocks[j].block_size];
 #else
 			static char const* const progress[] = { "\xb0", "\xb1", "\xb2" };
-			chr = progress[pp->blocks[j].bytes_progress * 3 / pp->blocks[j].block_size];
+			chr = progress[pp.blocks[j].bytes_progress * 3 / pp.blocks[j].block_size];
 #endif
 		}
-		else if (pp->blocks[j].state == block_info::finished) color = esc("32;7");
-		else if (pp->blocks[j].state == block_info::writing) color = esc("36;7");
-		else if (pp->blocks[j].state == block_info::requested)
+		else if (pp.blocks[j].state == block_info::finished) color = esc("32;7");
+		else if (pp.blocks[j].state == block_info::writing) color = esc("36;7");
+		else if (pp.blocks[j].state == block_info::requested)
 		{
 			color = snubbed ? esc("0;35") : esc("0");
 			chr = "=";
@@ -1719,16 +1717,12 @@ COLUMN OPTIONS
 			{
 				h.get_download_queue(queue);
 
-				std::sort(queue.begin(), queue.end()
-					, [] (partial_piece_info const& lhs, partial_piece_info const& rhs)
-					{ return lhs.piece_index < rhs.piece_index; });
-
 				int p = 0; // this is horizontal position
 				for (partial_piece_info const& i : queue)
 				{
 					if (pos + 3 >= terminal_height) break;
 
-					print_piece(&i, peers, out);
+					print_piece(i, peers, out);
 
 					int num_blocks = i.blocks_in_piece;
 					p += num_blocks + 8;
@@ -1754,8 +1748,9 @@ COLUMN OPTIONS
 					pos += 1;
 				}
 
-				std::snprintf(str, sizeof(str), "%s %s downloading | %s %s flushed | %s %s snubbed | = requested\x1b[K\n"
+				std::snprintf(str, sizeof(str), "%s %s downloading | %s %s writing | %s %s flushed | %s %s snubbed | = requested\x1b[K\n"
 					, esc("33;7"), esc("0") // downloading
+					, esc("36;7"), esc("0") // writing
 					, esc("32;7"), esc("0") // flushed
 					, esc("35;7"), esc("0") // snubbed
 					);

@@ -58,8 +58,7 @@ struct session_view
 
 private:
 
-	int m_position;
-	int m_width;
+	int m_position = 0;
 
 	// there are two sets of counters. the current one and the last one. This
 	// is used to calculate rates
@@ -69,7 +68,7 @@ private:
 	// respectively. The timestamps are microseconds since session start
 	std::uint64_t m_timestamp[2];
 
-	bool m_print_utp_stats;
+	bool m_print_utp_stats = false;
 
 	int const m_queued_bytes_idx = lt::find_metric_idx("disk.queued_write_bytes");
 	int const m_wasted_bytes_idx = lt::find_metric_idx("net.recv_redundant_bytes");

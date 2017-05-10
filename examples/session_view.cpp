@@ -32,19 +32,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include "session_view.hpp"
 #include "print.hpp"
-#include "libtorrent/session_stats.hpp"
 #include "libtorrent/torrent_handle.hpp"
 
 #include <algorithm> // for std::max
 
 session_view::session_view()
-	: m_position(0)
-	, m_print_utp_stats(false)
 {
-	using lt::find_metric_idx;
-
-	m_width = 128;
-
 	std::vector<lt::stats_metric> metrics = lt::session_stats_metrics();
 	m_cnt[0].resize(metrics.size(), 0);
 	m_cnt[1].resize(metrics.size(), 0);
@@ -59,7 +52,7 @@ int session_view::pos() const { return m_position; }
 
 int session_view::height() const
 {
-	return 3 + m_print_utp_stats;
+	return 2 + m_print_utp_stats;
 }
 
 void session_view::render()
@@ -96,7 +89,7 @@ void session_view::render()
 
 	std::snprintf(str, sizeof(str), "%s%swaste: %s   up: %s (%s) "
 		"disk queue: %s | %s cache w: %3d%% "
-		"total: %s       %s\x1b[K"
+		"total: %s                                         %s\x1b[K"
 #ifdef _WIN32
 		, esc("40")
 #else
@@ -114,24 +107,6 @@ void session_view::render()
 		, esc("0"));
 	set_cursor_pos(0, y++);
 	print(str);
-
-/*
-	std::snprintf(str, sizeof(str), "| timing - "
-		" read: %6d ms | write: %6d ms | hash: %6d"
-		, cs.average_read_time / 1000, cs.average_write_time / 1000
-		, cs.average_hash_time / 1000);
-
-	set_cursor_pos(0, y++);
-	print(str);
-
-	std::snprintf(str, sizeof(str), "| jobs   - queued: %4d (%4d) pending: %4d blocked: %4d "
-		"queued-bytes: %5" PRId64 " kB"
-		, cs.queued_jobs, cs.peak_queued, cs.pending_jobs, cs.blocked_jobs
-		, m_cnt[0][m_queued_bytes_idx] / 1000);
-
-	set_cursor_pos(0, y++);
-	print(str);
-*/
 
 	if (m_print_utp_stats)
 	{
