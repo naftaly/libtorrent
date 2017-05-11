@@ -125,10 +125,6 @@ namespace libtorrent {
 		// this submits all queued up jobs to the thread
 		void submit_jobs() override;
 
-		// TODO: 4 simplify this function
-		// returns true if the job was blocked by a fence
-		bool prep_read_job_impl(disk_io_job* j, bool check_fence = true);
-
 		status_t do_read(disk_io_job* j);
 		status_t do_write(disk_io_job* j);
 		status_t do_hash(disk_io_job* j);
@@ -140,9 +136,6 @@ namespace libtorrent {
 		status_t do_rename_file(disk_io_job* j);
 		status_t do_stop_torrent(disk_io_job* j);
 		status_t do_read_and_hash(disk_io_job* j);
-		status_t do_flush_piece(disk_io_job* j);
-		status_t do_flush_hashed(disk_io_job* j);
-		status_t do_flush_storage(disk_io_job* j);
 		status_t do_file_priority(disk_io_job* j);
 		status_t do_clear_piece(disk_io_job* j);
 		status_t do_resolve_links(disk_io_job* j);

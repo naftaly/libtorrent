@@ -256,9 +256,8 @@ namespace libtorrent {
 		&disk_io_thread::do_check_fastresume,
 		&disk_io_thread::do_rename_file,
 		&disk_io_thread::do_stop_torrent,
-		&disk_io_thread::do_flush_piece,
-		&disk_io_thread::do_flush_hashed,
-		&disk_io_thread::do_flush_storage,
+		nullptr,
+		nullptr,
 		&disk_io_thread::do_file_priority,
 		&disk_io_thread::do_clear_piece
 	};
@@ -439,33 +438,21 @@ namespace libtorrent {
 		j->requester = requester;
 		j->callback = std::move(handler);
 
-		if (!prep_read_job_impl(j))
-			add_job(j);
-	}
-
-	// this function checks to see if a read job is a cache hit,
-	// and if it doesn't have a piece allocated, it allocates
-	// one and it sets outstanding_read flag and possibly queues
-	// up the job in the piece read job list
-	// the cache std::mutex must be held when calling this
-	//
-	// false if it needs to be added to the job queue
-	// true if it was deferred and will be performed later (no need to
-	//   add it to the queue)
-	bool disk_io_thread::prep_read_job_impl(disk_io_job* j, bool check_fence)
-	{
-		TORRENT_ASSERT(j->action == disk_io_job::read);
-
-		if (check_fence && j->storage->is_blocked(j))
+		// check to see if there's a fence up for this job, and if there is, add
+		// it to the fence queue. If there's no fence we can add the job to the
+		// normal queue
+		if (j->storage->is_blocked(j))
 		{
 			// this means the job was queued up inside storage
 			m_stats_counters.inc_stats_counter(counters::blocked_disk_jobs);
 			DLOG("blocked job: %s (torrent: %d total: %d)\n"
 				, job_action_name[j->action], j->storage ? j->storage->num_blocked() : 0
 				, int(m_stats_counters[counters::blocked_disk_jobs]));
-			return true;
 		}
-		return false;
+		else
+		{
+			add_job(j);
+		}
 	}
 
 	bool disk_io_thread::async_write(storage_index_t const storage, peer_request const& r
@@ -675,16 +662,9 @@ namespace libtorrent {
 		j->storage = m_torrents[storage]->shared_from_this();
 		j->piece = piece;
 		j->callback = std::move(handler);
-
-		if (m_abort)
-		{
-			j->error.ec = boost::asio::error::operation_aborted;
-			j->call_callback();
-			free_job(j);
-			return;
-		}
-
-		add_job(j);
+		j->error.ec.clear();
+		j->call_callback();
+		free_job(j);
 	}
 
 	void disk_io_thread::async_set_file_priority(storage_index_t const storage
@@ -911,24 +891,6 @@ namespace libtorrent {
 		c.set_value(counters::disk_blocks_in_use, m_buffer_pool.in_use());
 	}
 
-	status_t disk_io_thread::do_flush_piece(disk_io_job*)
-	{
-		return status_t::no_error;
-	}
-
-	// this is triggered every time we insert a new dirty block in a piece
-	// by the time this gets executed, the block may already have been flushed
-	// triggered by another mechanism.
-	status_t disk_io_thread::do_flush_hashed(disk_io_job*)
-	{
-		return status_t::no_error;
-	}
-
-	status_t disk_io_thread::do_flush_storage(disk_io_job*)
-	{
-		return status_t::no_error;
-	}
-
 	status_t disk_io_thread::do_file_priority(disk_io_job* j)
 	{
 		j->storage->set_file_priority(
@@ -960,10 +922,7 @@ namespace libtorrent {
 
 		m_stats_counters.inc_stats_counter(counters::num_fenced_read + j->action);
 
-		disk_io_job* fj = allocate_job(disk_io_job::flush_storage);
-		fj->storage = j->storage;
-
-		int ret = j->storage->raise_fence(j, fj, m_stats_counters);
+		int ret = j->storage->raise_fence(j, m_stats_counters);
 		if (ret == aux::disk_job_fence::fence_post_fence)
 		{
 			std::unique_lock<std::mutex> l(m_job_mutex);
@@ -971,29 +930,10 @@ namespace libtorrent {
 			m_generic_io_jobs.m_queued_jobs.push_back(j);
 			l.unlock();
 
-			// discard the flush job
-			free_job(fj);
-
 			if (num_threads() == 0 && user_add)
 				immediate_execute();
 
 			return;
-		}
-
-		if (ret == aux::disk_job_fence::fence_post_flush)
-		{
-			// now, we have to make sure that all outstanding jobs on this
-			// storage actually get flushed, in order for the fence job to
-			// be executed
-			std::unique_lock<std::mutex> l(m_job_mutex);
-			TORRENT_ASSERT((fj->flags & disk_io_job::in_progress) || !fj->storage);
-
-			m_generic_io_jobs.m_queued_jobs.push_front(fj);
-		}
-		else
-		{
-			TORRENT_ASSERT((fj->flags & disk_io_job::in_progress) == 0);
-			TORRENT_ASSERT(fj->blocked);
 		}
 
 		if (num_threads() == 0 && user_add)
@@ -1009,8 +949,7 @@ namespace libtorrent {
 		// if this happens, it means we started to shut down
 		// the disk threads too early. We have to post all jobs
 		// before the disk threads are shut down
-		TORRENT_ASSERT(!m_abort
-			|| j->action == disk_io_job::flush_piece);
+		TORRENT_ASSERT(!m_abort);
 
 		// this happens for read jobs that get hung on pieces in the
 		// block cache, and then get issued
@@ -1313,26 +1252,9 @@ namespace libtorrent {
 
 		if (new_jobs.size() > 0)
 		{
-			jobqueue_t other_jobs;
-			while (new_jobs.size() > 0)
-			{
-				disk_io_job* j = new_jobs.pop_front();
-
-				if (j->action == disk_io_job::read
-					&& prep_read_job_impl(j, false))
-				{
-					// job blocked by fence
-					continue;
-				}
-
-				// this isn't correct, since jobs in the jobs
-				// queue aren't ordered
-				other_jobs.push_back(j);
-			}
-
 			{
 				std::lock_guard<std::mutex> l(m_job_mutex);
-				m_generic_io_jobs.m_queued_jobs.append(other_jobs);
+				m_generic_io_jobs.m_queued_jobs.append(new_jobs);
 			}
 
 			{
