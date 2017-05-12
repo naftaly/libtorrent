@@ -115,13 +115,13 @@ namespace libtorrent { namespace aux {
 
 	std::uint32_t to_file_open_mode(std::uint32_t const mode)
 	{
-		std::uint32_t ret = 0;
-		ret = (mode & open_mode_t::write)
-			? file_open_mode::read_write
-			: file_open_mode::read_write;
+		std::uint32_t const ret =
+			(mode & open_mode_t::write)
+				? file_open_mode::read_write : file_open_mode::read_write
+			| (mode & open_mode_t::no_atime)
+				? file_open_mode::no_atime : 0
+			;
 
-// TODO: file_open_mode::no_cache
-//		if (mode & file::no_atime) ret |= file_open_mode::no_atime;
 		return ret;
 	}
 
@@ -147,7 +147,6 @@ namespace libtorrent { namespace aux {
 		return ret;
 	}
 
-	// TODO: make this not be a linear scan
 	std::shared_ptr<file_mapping> file_view_pool::remove_oldest(std::unique_lock<std::mutex>&)
 	{
 		auto& lru_view = m_files.get<1>();

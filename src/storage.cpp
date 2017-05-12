@@ -744,8 +744,11 @@ namespace libtorrent {
 //		if (m_file_priority.end_index() > file && m_file_priority[file] == 0)
 //			mode |= file::sparse;
 
-//		if (m_settings && settings().get_bool(settings_pack::no_atime_storage)) mode |= file::no_atime;
-		// TODO: support noatime on linux
+		if (m_settings
+			&& settings().get_bool(settings_pack::no_atime_storage))
+		{
+			mode |= open_mode_t::no_atime;
+		}
 
 		// if we have a cache already, don't store the data twice by leaving it in the OS cache as well
 		if (m_settings

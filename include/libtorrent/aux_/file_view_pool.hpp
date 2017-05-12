@@ -73,13 +73,17 @@ namespace aux {
 	namespace mi = boost::multi_index;
 
 	enum open_mode_t : std::uint32_t
-	{ write = 1, no_cache = 2, truncate = 4};
+	{ write = 1, no_cache = 2, truncate = 4, no_atime = 8 };
 
 	inline int file_flags(std::uint32_t const mode)
 	{
 		return (mode & open_mode_t::write)
-			? O_RDWR | O_CREAT
-			: O_RDONLY;
+			? O_RDWR | O_CREAT : O_RDONLY
+#ifdef O_NOATIME
+			| (mode & open_mode_t::noatime)
+			? O_NOATIME : 0
+#endif
+			;
 	}
 
 	struct TORRENT_EXTRA_EXPORT file_handle
@@ -88,6 +92,15 @@ namespace aux {
 			, std::uint32_t const mode)
 			: m_fd(open(name.to_string().c_str(), file_flags(mode), 0755))
 		{
+#ifdef O_NOATIME
+			if (m_fd < 0 && (mode & open_mode_t::no_atime))
+			{
+				// NOATIME may not be allowed for certain files, it's best-effort,
+				// so just try again without NOATIME
+				m_fd = open(name.to_string().c_str()
+					, file_flags(mode & ~open_mode_t::no_atime), 0755);
+			}
+#endif
 			if (m_fd < 0) throw_ex<system_error>(error_code(errno, system_category()));
 			if (mode & open_mode_t::truncate)
 			{
