@@ -158,6 +158,7 @@ libtorrent_rasterbar_la_SOURCES = \
   version.cpp                     \
   file_progress.cpp               \
   ffs.cpp                         \
+  mmap.cpp                        \
   \
   $(KADEMLIA_SOURCES)             \
   \

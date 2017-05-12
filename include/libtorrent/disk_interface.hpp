@@ -57,6 +57,7 @@ namespace libtorrent {
 	struct counters;
 	struct settings_pack;
 	struct storage_params;
+	struct storage_error;
 	class file_storage;
 
 	struct storage_holder;

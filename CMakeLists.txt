@@ -121,6 +121,7 @@ set(sources
 	xml_parse
 	version
 	ffs
+	mmap
 
 # -- extensions --
 	ut_pex

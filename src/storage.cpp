@@ -487,7 +487,7 @@ namespace libtorrent {
 
 			int ret = 0;
 			error_code e;
-			span<aux::byte const volatile> file_range = handle.range();
+			span<byte const volatile> file_range = handle.range();
 			if (file_range.size() > file_offset)
 			{
 				file_range = file_range.subspan(file_offset);
@@ -571,7 +571,7 @@ namespace libtorrent {
 
 			int ret = 0;
 			error_code e;
-			span<aux::byte volatile> file_range = handle.range().subspan(file_offset);
+			span<byte volatile> file_range = handle.range().subspan(file_offset);
 			for (auto buf : vec)
 			{
 				// TODO: error handling
@@ -654,7 +654,7 @@ namespace libtorrent {
 
 			int ret = 0;
 			error_code e;
-			span<aux::byte const volatile> file_range = handle.range();
+			span<byte const volatile> file_range = handle.range();
 			if (file_range.size() > file_offset)
 			{
 				file_range = file_range.subspan(file_offset
@@ -767,18 +767,6 @@ namespace libtorrent {
 			ec = ex.code();
 			return {};
 		}
-/*
-		if (ec && (mode & file::lock_file))
-		{
-			// we failed to open the file and we're trying to lock it. It's
-			// possible we're failing because we have another handle to this
-			// file in use (but waiting to be closed). Just retry to open it
-			// without locking.
-			mode &= ~file::lock_file;
-			ret = m_pool.open_file(storage_index(), m_save_path, file, files()
-				, mode);
-		}
-*/
 	}
 
 	bool default_storage::tick()

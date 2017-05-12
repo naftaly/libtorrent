@@ -664,6 +664,7 @@ SOURCES =
 	proxy_settings
 	file_progress
 	ffs
+	mmap
 
 # -- extensions --
 	ut_pex
