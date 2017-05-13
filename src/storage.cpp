@@ -628,16 +628,16 @@ namespace libtorrent {
 				}
 				return int(read_size);
 			}
-/*
+
 			if (file_index < m_file_priority.end_index()
 				&& m_file_priority[file_index] == 0)
 			{
 				need_partfile();
 
-#error make the partfile memory mapped as well (and remove flush_metadata() and storage tick)
 				error_code e;
 				peer_request map = files().map_file(file_index, file_offset, 0);
-				int const ret = m_part_file->readv(vec, map.piece, map.start, e);
+				int const ret = m_part_file->hashv(ph, read_size
+					, map.piece, map.start, e);
 
 				if (e)
 				{
@@ -648,7 +648,7 @@ namespace libtorrent {
 				}
 				return ret;
 			}
-*/
+
 			auto handle = open_file(file_index, flags, ec);
 			if (ec) return -1;
 

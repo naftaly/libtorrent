@@ -172,10 +172,12 @@ namespace libtorrent {
 		return slot;
 	}
 
-	int part_file::writev(span<iovec_t const> bufs, piece_index_t const piece
-		, int offset, error_code& ec)
+	int part_file::writev(span<iovec_t const> bufs
+		, piece_index_t const piece
+		, int const offset, error_code& ec)
 	{
 		TORRENT_ASSERT(offset >= 0);
+		TORRENT_ASSERT(bufs.size() + offset <= std::size_t(m_piece_size));
 		std::unique_lock<std::mutex> l(m_mutex);
 
 		open_file(file::read_write, ec);
@@ -187,14 +189,16 @@ namespace libtorrent {
 
 		l.unlock();
 
-		std::int64_t slot_offset = std::int64_t(m_header_size) + std::int64_t(static_cast<int>(slot)) * m_piece_size;
+		std::int64_t const slot_offset = std::int64_t(m_header_size) + std::int64_t(static_cast<int>(slot)) * m_piece_size;
 		return int(m_file.writev(slot_offset + offset, bufs, ec));
 	}
 
 	int part_file::readv(span<iovec_t const> bufs
-		, piece_index_t const piece, int offset, error_code& ec)
+		, piece_index_t const piece
+		, int const offset, error_code& ec)
 	{
 		TORRENT_ASSERT(offset >= 0);
+		TORRENT_ASSERT(bufs.size() + offset <= std::size_t(m_piece_size));
 		std::unique_lock<std::mutex> l(m_mutex);
 
 		auto const i = m_piece_map.find(piece);
@@ -211,8 +215,39 @@ namespace libtorrent {
 
 		l.unlock();
 
-		std::int64_t slot_offset = std::int64_t(m_header_size) + std::int64_t(static_cast<int>(slot)) * m_piece_size;
+		std::int64_t const slot_offset = std::int64_t(m_header_size) + std::int64_t(static_cast<int>(slot)) * m_piece_size;
 		return int(m_file.readv(slot_offset + offset, bufs, ec));
+	}
+
+	int part_file::hashv(hasher& ph
+		, std::size_t const len
+		, piece_index_t const piece
+		, int const offset, error_code& ec)
+	{
+		TORRENT_ASSERT(offset >= 0);
+		TORRENT_ASSERT(len + offset <= m_piece_size);
+		std::unique_lock<std::mutex> l(m_mutex);
+
+		auto const i = m_piece_map.find(piece);
+		if (i == m_piece_map.end())
+		{
+			ec = error_code(boost::system::errc::no_such_file_or_directory
+				, boost::system::generic_category());
+			return -1;
+		}
+
+		slot_index_t const slot = i->second;
+		open_file(file::read_write, ec);
+		if (ec) return -1;
+
+		l.unlock();
+
+		std::vector<char> buffer(len);
+		iovec_t v = buffer;
+		std::int64_t const slot_offset = std::int64_t(m_header_size) + std::int64_t(static_cast<int>(slot)) * m_piece_size;
+		int const ret = int(m_file.readv(slot_offset + offset, v, ec));
+		ph.update(buffer);
+		return ret;
 	}
 
 	void part_file::open_file(std::uint32_t const mode, error_code& ec)
