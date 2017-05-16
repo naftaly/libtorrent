@@ -144,8 +144,8 @@ namespace libtorrent {
 
 				m_part_file->export_file([&f, &ec](std::int64_t file_offset, span<char> buf)
 				{
-					// TODO: error handling
-					auto file_range = f.range().subspan(file_offset);
+					// TODO: 4 error handling
+					auto file_range = f.range().subspan(std::size_t(file_offset));
 					TORRENT_ASSERT(file_range.size() >= buf.size());
 					std::memcpy(const_cast<char*>(file_range.data())
 						, buf.data(), buf.size());
@@ -488,9 +488,9 @@ namespace libtorrent {
 			int ret = 0;
 			error_code e;
 			span<byte const volatile> file_range = handle.range();
-			if (file_range.size() > file_offset)
+			if (file_range.size() > std::size_t(file_offset))
 			{
-				file_range = file_range.subspan(file_offset);
+				file_range = file_range.subspan(std::size_t(file_offset));
 				for (auto buf : vec)
 				{
 					// TODO: error handling
@@ -571,7 +571,7 @@ namespace libtorrent {
 
 			int ret = 0;
 			error_code e;
-			span<byte volatile> file_range = handle.range().subspan(file_offset);
+			span<byte volatile> file_range = handle.range().subspan(std::size_t(file_offset));
 			for (auto buf : vec)
 			{
 				// TODO: error handling
@@ -616,13 +616,13 @@ namespace libtorrent {
 				, std::int64_t const file_offset
 				, span<iovec_t const> vec, storage_error& ec)
 		{
-			size_t const read_size = bufs_size(vec);
+		std::size_t const read_size = std::size_t(bufs_size(vec));
 
 			if (files().pad_file_at(file_index))
 			{
 				std::array<char, 64> zeroes;
 				zeroes.fill(0);
-				for (int left = read_size; left > 0; left -= zeroes.size())
+				for (int left = int(read_size); left > 0; left -= zeroes.size())
 				{
 					ph.update({zeroes.data(), std::min(zeroes.size(), std::size_t(left))});
 				}
@@ -655,9 +655,9 @@ namespace libtorrent {
 			int ret = 0;
 			error_code e;
 			span<byte const volatile> file_range = handle.range();
-			if (file_range.size() > file_offset)
+			if (file_range.size() > std::size_t(file_offset))
 			{
-				file_range = file_range.subspan(file_offset
+				file_range = file_range.subspan(std::size_t(file_offset)
 					, std::min(read_size, file_range.size() - std::size_t(file_offset)));
 				// TODO: error handling
 				ph.update({const_cast<char const*>(file_range.data()), file_range.size()});
