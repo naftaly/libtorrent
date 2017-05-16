@@ -203,9 +203,6 @@ namespace libtorrent {
 		m_buffer_pool.set_settings(m_settings);
 		m_file_pool.resize(m_settings.get_int(settings_pack::file_pool_size));
 
-		// this disk I/O subsystem only supports a single thread (for now).
-		// the only reason is that the async_hash() job would race with the
-		// preceding async_write() jobs.
 		int const num_threads = m_settings.get_int(settings_pack::aio_threads);
 		// add one hasher thread for every three generic threads
 		int const num_hash_threads = num_threads / 4;
@@ -256,7 +253,6 @@ namespace libtorrent {
 		&disk_io_thread::do_check_fastresume,
 		&disk_io_thread::do_rename_file,
 		&disk_io_thread::do_stop_torrent,
-		nullptr,
 		nullptr,
 		&disk_io_thread::do_file_priority,
 		&disk_io_thread::do_clear_piece
@@ -652,19 +648,6 @@ namespace libtorrent {
 			, to_abort, completed_jobs);
 		if (completed_jobs.size())
 			add_completed_jobs(completed_jobs);
-	}
-
-	void disk_io_thread::async_flush_piece(storage_index_t const storage
-		, piece_index_t const piece
-		, std::function<void()> handler)
-	{
-		disk_io_job* j = allocate_job(disk_io_job::flush_piece);
-		j->storage = m_torrents[storage]->shared_from_this();
-		j->piece = piece;
-		j->callback = std::move(handler);
-		j->error.ec.clear();
-		j->call_callback();
-		free_job(j);
 	}
 
 	void disk_io_thread::async_set_file_priority(storage_index_t const storage

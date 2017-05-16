@@ -88,7 +88,6 @@ namespace libtorrent {
 			, check_fastresume
 			, rename_file
 			, stop_torrent
-			, flush_piece
 			, flush_storage
 			, file_priority
 			, clear_piece

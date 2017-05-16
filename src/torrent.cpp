@@ -3922,9 +3922,6 @@ namespace libtorrent {
 		downloaders.clear();
 		peers.clear();
 
-		// make the disk cache flush the piece to disk
-		if (m_storage)
-			m_ses.disk_thread().async_flush_piece(m_storage, index);
 		m_picker->piece_passed(index);
 		update_gauge();
 		we_have(index);
