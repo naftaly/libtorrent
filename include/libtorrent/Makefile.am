@@ -205,6 +205,7 @@ nobase_include_HEADERS = \
   aux_/array.hpp                    \
   aux_/ip_notifier.hpp              \
   aux_/mmap.hpp                     \
+  aux_/store_buffer.hpp             \
   \
   extensions/smart_ban.hpp          \
   extensions/ut_metadata.hpp        \

@@ -226,10 +226,7 @@ namespace libtorrent {
 
 			if (j->action == disk_io_job::write)
 			{
-				std::lock_guard<std::mutex> l(m_store_buffer_mutex);
-				auto it = m_store_buffer.find(torrent_location(j->storage.get(), j->piece, j->d.io.offset));
-				TORRENT_ASSERT(it != m_store_buffer.end());
-				m_store_buffer.erase(it);
+				m_store_buffer.erase({j->storage.get(), j->piece, j->d.io.offset});
 			}
 			j->ret = status_t::fatal_disk_error;
 			j->error = e;
@@ -403,12 +400,7 @@ namespace libtorrent {
 				m_need_tick.push_back({aux::time_now() + minutes(2), j->storage});
 		}
 
-		{
-			std::lock_guard<std::mutex> l(m_store_buffer_mutex);
-			auto it = m_store_buffer.find(torrent_location(j->storage.get(), j->piece, j->d.io.offset));
-			TORRENT_ASSERT(it != m_store_buffer.end());
-			m_store_buffer.erase(it);
-		}
+		m_store_buffer.erase({j->storage.get(), j->piece, j->d.io.offset});
 
 		return ret != j->d.io.buffer_size
 			? status_t::fatal_disk_error : status_t::no_error;
@@ -475,11 +467,8 @@ namespace libtorrent {
 
 		TORRENT_ASSERT((r.start % m_buffer_pool.block_size()) == 0);
 
-		{
-			std::lock_guard<std::mutex> l(m_store_buffer_mutex);
-			m_store_buffer.insert({torrent_location(j->storage.get(), j->piece, j->d.io.offset)
-				, boost::get<disk_buffer_holder>(j->argument).get()});
-		}
+		m_store_buffer.insert({j->storage.get(), j->piece, j->d.io.offset}
+			, boost::get<disk_buffer_holder>(j->argument).get());
 
 		if (j->storage->is_blocked(j))
 		{
@@ -705,18 +694,13 @@ namespace libtorrent {
 			std::size_t const len = aux::numeric_cast<std::size_t>(
 				std::min(block_size, piece_size - offset));
 
-			std::unique_lock<std::mutex> l(m_store_buffer_mutex);
-			auto it = m_store_buffer.find({j->storage.get(), j->piece, offset});
-			if (it != m_store_buffer.end())
+			if (!m_store_buffer.get({j->storage.get(), j->piece, offset}
+				, [&](char* buf)
+				{
+					h.update({buf, len});
+					ret = int(len);
+				}))
 			{
-				h.update({it->second, len});
-				ret = int(len);
-
-				l.unlock();
-			}
-			else
-			{
-				l.unlock();
 				ret = j->storage->hashv(h, len, j->piece, offset, file_flags, j->error);
 				if (ret < 0) break;
 			}
