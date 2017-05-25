@@ -33,7 +33,6 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/config.hpp"
 #include "libtorrent/storage.hpp"
 #include "libtorrent/disk_io_thread.hpp"
-#include "libtorrent/string_util.hpp" // for allocate_string_copy
 #include "libtorrent/disk_buffer_holder.hpp"
 #include "libtorrent/aux_/alloca.hpp"
 #include "libtorrent/aux_/throw.hpp"
@@ -129,7 +128,7 @@ namespace libtorrent {
 		, m_generic_threads(m_generic_io_jobs, ios)
 		, m_hash_io_jobs(*this)
 		, m_hash_threads(m_hash_io_jobs, ios)
-		, m_buffer_pool(block_size, ios/*, std::bind(&disk_io_thread::trigger_cache_trim, this)*/)
+		, m_buffer_pool(block_size, ios)
 		, m_stats_counters(cnt)
 		, m_ios(ios)
 	{

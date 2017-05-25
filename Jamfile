@@ -573,6 +573,7 @@ SOURCES =
 	disk_io_job
 	disk_io_thread
 	disk_io_thread_pool
+	disabled_disk_io
 	disk_job_fence
 	disk_job_pool
 	entry

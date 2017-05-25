@@ -61,6 +61,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/write_resume_data.hpp"
 #include "libtorrent/string_view.hpp"
 #include "libtorrent/disk_interface.hpp" // for open_file_state
+#include "libtorrent/disabled_disk_io.hpp" // for disabled_disk_io_constructor
 
 #include "torrent_view.hpp"
 #include "session_view.hpp"
@@ -1054,6 +1055,7 @@ R"(  -i <i2p-host>         the hostname to an I2P SAM bridge to use
 R"(
 DISK OPTIONS
   -a <mode>             sets the allocation mode. [sparse|allocate]
+  -0                    disable disk I/O, read garbage and don't flush to disk
 
 TORRENT is a path to a .torrent file
 MAGNETURL is a magnet link
@@ -1066,7 +1068,9 @@ MAGNETURL is a magnet link
 	torrent_view view;
 	session_view ses_view;
 
-	settings_pack settings;
+	session_params params;
+	auto& settings = params.settings;
+
 	settings.set_int(settings_pack::cache_size, cache_size);
 	settings.set_int(settings_pack::choking_algorithm, settings_pack::rate_based_choker);
 
@@ -1192,6 +1196,11 @@ MAGNETURL is a magnet link
 					rate_limit_locals = true;
 					break;
 				}
+			case '0':
+				{
+					params.disk_io_constructor = lt::disabled_disk_io_constructor;
+					--i;
+				}
 		}
 		++i; // skip the argument
 	}
@@ -1220,7 +1229,7 @@ MAGNETURL is a magnet link
 		+ alert::picker_log_notification
 		));
 
-	lt::session ses(settings);
+	lt::session ses(params);
 
 	if (rate_limit_locals)
 	{

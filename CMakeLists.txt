@@ -113,6 +113,7 @@ set(sources
 	disk_buffer_pool
 	disk_io_thread
 	disk_io_thread_pool
+	disabled_disk_io
 	enum_net
 	broadcast_socket
 	magnet_uri

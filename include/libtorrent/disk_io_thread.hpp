@@ -57,10 +57,8 @@ POSSIBILITY OF SUCH DAMAGE.
 
 namespace libtorrent {
 
-	class alert;
 	struct add_torrent_params;
 	struct counters;
-	class alert_manager;
 
 	using jobqueue_t = tailqueue<disk_io_job>;
 
@@ -227,9 +225,6 @@ namespace libtorrent {
 		aux::store_buffer m_store_buffer;
 
 		aux::session_settings m_settings;
-
-		// the last time we expired write blocks from the cache
-		time_point m_last_cache_expiry = min_time();
 
 		// LRU cache of open files
 		aux::file_view_pool m_file_pool{40};
