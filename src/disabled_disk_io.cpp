@@ -31,29 +31,16 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 #include "libtorrent/config.hpp"
-#include "libtorrent/storage.hpp"
 #include "libtorrent/disabled_disk_io.hpp"
 #include "libtorrent/disk_buffer_holder.hpp"
-#include "libtorrent/aux_/alloca.hpp"
-#include "libtorrent/aux_/throw.hpp"
 #include "libtorrent/error_code.hpp"
-#include "libtorrent/error.hpp"
-#include "libtorrent/torrent_info.hpp"
-#include "libtorrent/platform_util.hpp"
 #include "libtorrent/time.hpp"
 #include "libtorrent/disk_buffer_pool.hpp"
-#include "libtorrent/disk_io_job.hpp"
-#include "libtorrent/alert_types.hpp"
 #include "libtorrent/performance_counters.hpp"
-#include "libtorrent/alert_manager.hpp"
 #include "libtorrent/debug.hpp"
 #include "libtorrent/units.hpp"
-#include "libtorrent/hasher.hpp"
-#include "libtorrent/aux_/array.hpp"
 
 #include <functional>
-
-#include <boost/variant/get.hpp>
 
 namespace libtorrent {
 
