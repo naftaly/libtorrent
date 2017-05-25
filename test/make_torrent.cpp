@@ -38,6 +38,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/entry.hpp"
 #include "libtorrent/bencode.hpp"
 #include "libtorrent/aux_/file_view_pool.hpp"
+#include "libtorrent/aux_/session_settings.hpp"
 #include "libtorrent/storage_defs.hpp"
 
 using namespace lt;
@@ -174,6 +175,8 @@ void generate_files(lt::torrent_info const& ti, std::string const& path
 	params.files = &ti.files();
 	params.path = path;
 
+	// default settings
+	aux::session_settings sett;
 	default_storage st(params, fp);
 
 	file_storage const& fs = ti.files();
@@ -192,7 +195,7 @@ void generate_files(lt::torrent_info const& ti, std::string const& path
 
 		iovec_t b = { &buffer[0], size_t(piece_size) };
 		storage_error ec;
-		int ret = st.writev(b, i, 0, 0, ec);
+		int ret = st.writev(sett, b, i, 0, 0, ec);
 		if (ret != piece_size || ec)
 		{
 			std::printf("ERROR writing files: (%d expected %d) %s\n"

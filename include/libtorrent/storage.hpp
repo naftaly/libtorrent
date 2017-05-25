@@ -95,13 +95,14 @@ namespace aux {
 		~default_storage();
 
 		bool has_any_file(storage_error& ec);
-		void set_file_priority(aux::vector<std::uint8_t, file_index_t> const& prio
+		void set_file_priority(aux::session_settings const&
+			, aux::vector<std::uint8_t, file_index_t> const& prio
 			, storage_error& ec);
 		void rename_file(file_index_t index, std::string const& new_filename
 			, storage_error& ec);
 		void release_files(storage_error& ec);
 		void delete_files(int options, storage_error& ec);
-		void initialize(storage_error& ec);
+		void initialize(aux::session_settings const&, storage_error& ec);
 		status_t move_storage(std::string const& save_path, int flags
 			, storage_error& ec);
 		bool verify_resume_data(add_torrent_params const& rd
@@ -109,11 +110,11 @@ namespace aux {
 			, storage_error& error);
 		bool tick();
 
-		int readv(span<iovec_t const> bufs
+		int readv(aux::session_settings const&, span<iovec_t const> bufs
 			, piece_index_t piece, int offset, std::uint32_t flags, storage_error& ec);
-		int writev(span<iovec_t const> bufs
+		int writev(aux::session_settings const&, span<iovec_t const> bufs
 			, piece_index_t piece, int offset, std::uint32_t flags, storage_error& ec);
-		int hashv(hasher& ph, std::size_t len, piece_index_t piece, int offset, std::uint32_t flags
+		int hashv(aux::session_settings const&, hasher& ph, std::size_t len, piece_index_t piece, int offset, std::uint32_t flags
 			, storage_error& ec);
 
 		// if the files in this storage are mapped, returns the mapped
@@ -134,11 +135,6 @@ namespace aux {
 		}
 
 		void set_owner(std::shared_ptr<void> const& tor) { m_torrent = tor; }
-
-		// access global session_settings
-		aux::session_settings const& settings() const { return *m_settings; }
-
-		aux::session_settings* m_settings = nullptr;
 
 		storage_index_t storage_index() const { return m_storage_index; }
 		void set_storage_index(storage_index_t st) { m_storage_index = st; }
@@ -180,8 +176,10 @@ namespace aux {
 		mutable stat_cache m_stat_cache;
 
 		// helper function to open a file in the file pool with the right mode
-		aux::file_view open_file(file_index_t file, std::uint32_t mode, storage_error& ec) const;
-		aux::file_view open_file_impl(file_index_t file, std::uint32_t mode, error_code& ec) const;
+		aux::file_view open_file(aux::session_settings const&, file_index_t
+			, std::uint32_t mode, storage_error& ec) const;
+		aux::file_view open_file_impl(aux::session_settings const& sett
+			, file_index_t file, std::uint32_t mode, error_code& ec) const;
 
 		aux::vector<std::uint8_t, file_index_t> m_file_priority;
 		std::string m_save_path;

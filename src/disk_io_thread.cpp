@@ -274,13 +274,6 @@ namespace libtorrent {
 
 		std::shared_ptr<default_storage> storage = j->storage;
 
-		// TODO: 4 instead of doing this. pass in the settings to each storage_interface
-		// call. Each disk thread could hold its most recent understanding of the settings
-		// in a shared_ptr, and update it every time it wakes up from a job. That way
-		// each access to the settings won't require a std::mutex to be held.
-		if (storage && storage->m_settings == nullptr)
-			storage->m_settings = &m_settings;
-
 		TORRENT_ASSERT(j->action < sizeof(job_functions) / sizeof(job_functions[0]));
 
 		time_point const start_time = clock_type::now();
@@ -343,7 +336,7 @@ namespace libtorrent {
 			, m_settings.get_bool(settings_pack::coalesce_reads));
 		iovec_t b = {buffer.get(), std::size_t(j->d.io.buffer_size)};
 
-		int ret = j->storage->readv(b
+		int ret = j->storage->readv(m_settings, b
 			, j->piece, j->d.io.offset, file_flags, j->error);
 
 		TORRENT_ASSERT(ret >= 0 || j->error.ec);
@@ -375,7 +368,7 @@ namespace libtorrent {
 		m_stats_counters.inc_stats_counter(counters::num_writing_threads, 1);
 
 		// the actual write operation
-		int const ret = j->storage->writev(b
+		int const ret = j->storage->writev(m_settings, b
 			, j->piece, j->d.io.offset, file_flags, j->error);
 
 		m_stats_counters.inc_stats_counter(counters::num_writing_threads, -1);
@@ -698,7 +691,7 @@ namespace libtorrent {
 					ret = int(len);
 				}))
 			{
-				ret = j->storage->hashv(h, len, j->piece, offset, file_flags, j->error);
+				ret = j->storage->hashv(m_settings, h, len, j->piece, offset, file_flags, j->error);
 				if (ret < 0) break;
 			}
 
@@ -797,7 +790,7 @@ namespace libtorrent {
 			if (has_files)
 			{
 				// always initialize the storage
-				j->storage->initialize(se);
+				j->storage->initialize(m_settings, se);
 				if (se)
 				{
 					j->error = se;
@@ -807,7 +800,7 @@ namespace libtorrent {
 			}
 		}
 
-		j->storage->initialize(se);
+		j->storage->initialize(m_settings, se);
 		if (se)
 		{
 			j->error = se;
@@ -857,8 +850,8 @@ namespace libtorrent {
 
 	status_t disk_io_thread::do_file_priority(disk_io_job* j)
 	{
-		j->storage->set_file_priority(
-			boost::get<aux::vector<std::uint8_t, file_index_t>>(j->argument)
+		j->storage->set_file_priority(m_settings
+			, boost::get<aux::vector<std::uint8_t, file_index_t>>(j->argument)
 			, j->error);
 		return status_t::no_error;
 	}

@@ -120,8 +120,8 @@ namespace libtorrent {
 			, files().num_pieces(), files().piece_length()));
 	}
 
-	void default_storage::set_file_priority(
-		aux::vector<std::uint8_t, file_index_t> const& prio
+	void default_storage::set_file_priority(aux::session_settings const& sett
+		, aux::vector<std::uint8_t, file_index_t> const& prio
 		, storage_error& ec)
 	{
 		// extend our file priorities in case it's truncated
@@ -137,7 +137,7 @@ namespace libtorrent {
 			if (old_prio == 0 && new_prio != 0)
 			{
 				// move stuff out of the part file
-				auto f = open_file(i, open_mode_t::write, ec);
+				auto f = open_file(sett, i, open_mode_t::write, ec);
 				if (ec) return;
 
 				need_partfile();
@@ -171,7 +171,7 @@ namespace libtorrent {
 				if (exists(fp))
 					new_prio = 1;
 /*
-				auto f = open_file(i, 0, ec);
+				auto f = open_file(sett, i, 0, ec);
 				if (ec.ec != boost::system::errc::no_such_file_or_directory)
 				{
 					if (ec) return;
@@ -207,7 +207,7 @@ namespace libtorrent {
 		}
 	}
 
-	void default_storage::initialize(storage_error& ec)
+	void default_storage::initialize(aux::session_settings const& sett, storage_error& ec)
 	{
 		m_stat_cache.reserve(files().num_files());
 
@@ -262,7 +262,7 @@ namespace libtorrent {
 			if ((!err && size > files().file_size(file_index))
 				|| files().file_size(file_index) == 0)
 			{
-				auto f = open_file(file_index, open_mode_t::write | open_mode_t::truncate, ec);
+				auto f = open_file(sett, file_index, open_mode_t::write | open_mode_t::truncate, ec);
 				if (ec)
 				{
 					ec.file(file_index);
@@ -444,7 +444,8 @@ namespace libtorrent {
 		return ret;
 	}
 
-	int default_storage::readv(span<iovec_t const> bufs
+	int default_storage::readv(aux::session_settings const& sett
+		, span<iovec_t const> bufs
 		, piece_index_t const piece, int const offset
 		, std::uint32_t const flags, storage_error& error)
 	{
@@ -452,7 +453,7 @@ namespace libtorrent {
 		std::this_thread::sleep_for(seconds(1));
 #endif
 		return readwritev(files(), bufs, piece, offset, error
-			, [this, flags](file_index_t const file_index
+			, [this, flags, &sett](file_index_t const file_index
 				, std::int64_t const file_offset
 				, span<iovec_t const> vec, storage_error& ec)
 		{
@@ -482,7 +483,7 @@ namespace libtorrent {
 				return ret;
 			}
 
-			auto handle = open_file(file_index, flags, ec);
+			auto handle = open_file(sett, file_index, flags, ec);
 			if (ec) return -1;
 
 			int ret = 0;
@@ -526,12 +527,13 @@ namespace libtorrent {
 		});
 	}
 
-	int default_storage::writev(span<iovec_t const> bufs
+	int default_storage::writev(aux::session_settings const& sett
+		, span<iovec_t const> bufs
 		, piece_index_t const piece, int const offset
 		, std::uint32_t const flags, storage_error& error)
 	{
 		return readwritev(files(), bufs, piece, offset, error
-			, [this, flags](file_index_t const file_index
+			, [this, flags, &sett](file_index_t const file_index
 				, std::int64_t const file_offset
 				, span<iovec_t const> vec, storage_error& ec)
 		{
@@ -565,7 +567,7 @@ namespace libtorrent {
 			// we're writing to it
 			m_stat_cache.set_dirty(file_index);
 
-			aux::file_view handle = open_file(file_index
+			aux::file_view handle = open_file(sett, file_index
 				, open_mode_t::write | flags, ec);
 			if (ec) return -1;
 
@@ -600,7 +602,8 @@ namespace libtorrent {
 		});
 	}
 
-	int default_storage::hashv(hasher& ph, std::size_t const len
+	int default_storage::hashv(aux::session_settings const& sett
+		, hasher& ph, std::size_t const len
 		, piece_index_t const piece, int const offset
 		, std::uint32_t const flags, storage_error& error)
 	{
@@ -612,7 +615,7 @@ namespace libtorrent {
 		span<iovec_t> dummy2(&dummy1, 1);
 
 		return readwritev(files(), dummy2, piece, offset, error
-			, [this, flags, &ph](file_index_t const file_index
+			, [this, flags, &ph, &sett](file_index_t const file_index
 				, std::int64_t const file_offset
 				, span<iovec_t const> vec, storage_error& ec)
 		{
@@ -649,7 +652,7 @@ namespace libtorrent {
 				return ret;
 			}
 
-			auto handle = open_file(file_index, flags, ec);
+			auto handle = open_file(sett, file_index, flags, ec);
 			if (ec) return -1;
 
 			int ret = 0;
@@ -678,7 +681,8 @@ namespace libtorrent {
 
 	// a wrapper around open_file_impl that, if it fails, makes sure the
 	// directories have been created and retries
-	aux::file_view default_storage::open_file(file_index_t const file
+	aux::file_view default_storage::open_file(aux::session_settings const& sett
+		, file_index_t const file
 		, std::uint32_t mode, storage_error& ec) const
 	{
 		if ((mode & open_mode_t::write) != 0
@@ -693,7 +697,7 @@ namespace libtorrent {
 			mode |= (m_file_created[file] == false) ? open_mode_t::truncate : 0;
 		}
 
-		aux::file_view h = open_file_impl(file, mode, ec.ec);
+		aux::file_view h = open_file_impl(sett, file, mode, ec.ec);
 
 		if ((mode & open_mode_t::write)
 			&& ec.ec == boost::system::errc::no_such_file_or_directory)
@@ -713,7 +717,7 @@ namespace libtorrent {
 
 			// if the directory creation failed, don't try to open the file again
 			// but actually just fail
-			h = open_file_impl(file, mode, ec.ec);
+			h = open_file_impl(sett, file, mode, ec.ec);
 		}
 		if (ec.ec)
 		{
@@ -731,10 +735,12 @@ namespace libtorrent {
 		return h;
 	}
 
-	aux::file_view default_storage::open_file_impl(file_index_t file, std::uint32_t mode
+	aux::file_view default_storage::open_file_impl(aux::session_settings const& sett
+		, file_index_t file
+		, std::uint32_t mode
 		, error_code& ec) const
 	{
-//		bool const lock_files = m_settings ? settings().get_bool(settings_pack::lock_files) : false;
+//		bool const lock_files = set.get_bool(settings_pack::lock_files) : false;
 		//TODO: support lock files
 
 //		if (!m_allocate_files) mode |= file::sparse;
@@ -744,15 +750,13 @@ namespace libtorrent {
 //		if (m_file_priority.end_index() > file && m_file_priority[file] == 0)
 //			mode |= file::sparse;
 
-		if (m_settings
-			&& settings().get_bool(settings_pack::no_atime_storage))
+		if (sett.get_bool(settings_pack::no_atime_storage))
 		{
 			mode |= open_mode_t::no_atime;
 		}
 
 		// if we have a cache already, don't store the data twice by leaving it in the OS cache as well
-		if (m_settings
-			&& settings().get_int(settings_pack::disk_io_write_mode)
+		if (sett.get_int(settings_pack::disk_io_write_mode)
 			== settings_pack::disable_os_cache)
 		{
 			mode |= open_mode_t::no_cache;
