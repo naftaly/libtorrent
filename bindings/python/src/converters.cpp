@@ -70,9 +70,10 @@ struct pair_to_tuple
     }
 };
 
+template <typename Addr>
 struct address_to_tuple
 {
-    static PyObject* convert(lt::address const& addr)
+    static PyObject* convert(Addr const& addr)
     {
         lt::error_code ec;
         return incref(bp::object(addr.to_string(ec)).ptr());
@@ -234,7 +235,7 @@ void bind_converters()
     to_python_converter<std::pair<lt::piece_index_t, int>, pair_to_tuple<lt::piece_index_t, int>>();
     to_python_converter<lt::tcp::endpoint, endpoint_to_tuple<lt::tcp::endpoint>>();
     to_python_converter<lt::udp::endpoint, endpoint_to_tuple<lt::udp::endpoint>>();
-    to_python_converter<lt::address, address_to_tuple>();
+    to_python_converter<lt::address, address_to_tuple<lt::address>>();
     to_python_converter<std::pair<std::string, int>, pair_to_tuple<std::string, int>>();
 
     to_python_converter<std::vector<lt::stats_metric>, vector_to_list<lt::stats_metric>>();
@@ -249,6 +250,14 @@ void bind_converters()
 
     to_python_converter<lt::piece_index_t, from_strong_typedef<lt::piece_index_t>>();
     to_python_converter<lt::file_index_t, from_strong_typedef<lt::file_index_t>>();
+
+    // work-around types
+    to_python_converter<lt::noexcept_move_constructible<lt::address>, address_to_tuple<
+        lt::noexcept_move_constructible<lt::address>>>();
+    to_python_converter<lt::noexcept_move_constructible<lt::tcp::endpoint>, endpoint_to_tuple<
+        lt::noexcept_move_constructible<lt::tcp::endpoint>>>();
+    to_python_converter<lt::noexcept_move_constructible<lt::udp::endpoint>, endpoint_to_tuple<
+        lt::noexcept_move_constructible<lt::udp::endpoint>>>();
 
     // python -> C++ conversions
     tuple_to_pair<int, int>();

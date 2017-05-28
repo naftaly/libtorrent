@@ -58,6 +58,8 @@ namespace libtorrent {
 		~file_entry();
 		file_entry(file_entry const&) = default;
 		file_entry& operator=(file_entry const&) = default;
+		file_entry(file_entry&&) noexcept = default;
+		file_entry& operator=(file_entry&&) noexcept = default;
 
 		// the full path of this file. The paths are unicode strings
 		// encoded in UTF-8.
@@ -114,8 +116,8 @@ namespace libtorrent {
 		internal_file_entry();
 		internal_file_entry(internal_file_entry const& fe);
 		internal_file_entry& operator=(internal_file_entry const& fe);
-		internal_file_entry(internal_file_entry&& fe);
-		internal_file_entry& operator=(internal_file_entry&& fe);
+		internal_file_entry(internal_file_entry&& fe) noexcept;
+		internal_file_entry& operator=(internal_file_entry&& fe) noexcept;
 		~internal_file_entry();
 
 		void set_name(char const* n, bool borrow_string = false, int string_len = 0);
@@ -202,8 +204,8 @@ namespace libtorrent {
 		~file_storage();
 		file_storage(file_storage const&);
 		file_storage& operator=(file_storage const&);
-		file_storage(file_storage&&);
-		file_storage& operator=(file_storage&&);
+		file_storage(file_storage&&) noexcept;
+		file_storage& operator=(file_storage&&) noexcept;
 
 		// returns true if the piece length has been initialized
 		// on the file_storage. This is typically taken as a proxy

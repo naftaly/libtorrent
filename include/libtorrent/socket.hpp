@@ -81,6 +81,26 @@ namespace libtorrent {
 	using boost::asio::null_buffers;
 #endif
 
+	// this is a silly wrapper for address and endpoint to make their move
+	// constructors be noexcept (because boost.asio is incorrectly making them
+	// potentially throwing). This can be removed once libtorrent uses the
+	// networking TS
+	template <typename T>
+	struct noexcept_move_constructible : T
+	{
+		noexcept_move_constructible(noexcept_move_constructible<T>&& rhs) noexcept
+			: T(std::move(rhs))
+		{}
+		noexcept_move_constructible(noexcept_move_constructible<T> const& rhs)
+			: T(rhs)
+		{}
+		noexcept_move_constructible(T&& rhs) noexcept : T(std::move(rhs)) {}
+		noexcept_move_constructible(T const& rhs) : T(rhs) {}
+
+		using T::T;
+		using T::operator=;
+	};
+
 #ifdef TORRENT_WINDOWS
 
 #ifndef PROTECTION_LEVEL_UNRESTRICTED

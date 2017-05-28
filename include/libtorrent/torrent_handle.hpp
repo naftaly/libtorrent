@@ -154,10 +154,10 @@ namespace libtorrent { namespace aux {
 #ifndef TORRENT_NO_DEPRECATE
 #include "libtorrent/aux_/disable_warnings_push.hpp"
 		partial_piece_info() = default;
-		partial_piece_info(partial_piece_info&&) = default;
+		partial_piece_info(partial_piece_info&&) noexcept = default;
 		partial_piece_info(partial_piece_info const&) = default;
 		partial_piece_info& operator=(partial_piece_info const&) = default;
-		partial_piece_info& operator=(partial_piece_info&&) = default;
+		partial_piece_info& operator=(partial_piece_info&&) noexcept = default;
 #include "libtorrent/aux_/disable_warnings_pop.hpp"
 #endif
 		// the index of the piece in question. ``blocks_in_piece`` is the number
@@ -260,9 +260,9 @@ namespace libtorrent { namespace aux {
 		torrent_handle() {}
 
 		torrent_handle(torrent_handle const& t) = default;
-		torrent_handle(torrent_handle&& t) = default;
+		torrent_handle(torrent_handle&& t) noexcept = default;
 		torrent_handle& operator=(torrent_handle const&) = default;
-		torrent_handle& operator=(torrent_handle&&) = default;
+		torrent_handle& operator=(torrent_handle&&) noexcept = default;
 
 		// flags for add_piece().
 		enum flags_t { overwrite_existing = 1 };

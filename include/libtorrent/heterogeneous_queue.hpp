@@ -235,8 +235,10 @@ namespace libtorrent {
 		}
 
 		template <class U>
-		static void move(char* dst, char* src)
+		static void move(char* dst, char* src) noexcept
 		{
+			static_assert(std::is_nothrow_move_constructible<U>::value
+				, "heterogeneous queue only supports noexcept move constructible types");
 			U& rhs = *reinterpret_cast<U*>(src);
 
 			TORRENT_ASSERT((reinterpret_cast<std::uintptr_t>(dst) & (alignof(U) - 1)) == 0);
