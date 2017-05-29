@@ -331,8 +331,8 @@ namespace libtorrent {
 		// all functions depending on internal_file_entry
 		// were deprecated in 1.0. Use the variants that take an
 		// index instead
-		typedef std::vector<internal_file_entry>::const_iterator iterator;
-		typedef std::vector<internal_file_entry>::const_reverse_iterator reverse_iterator;
+		using iterator = std::vector<internal_file_entry>::const_iterator;
+		using reverse_iterator = std::vector<internal_file_entry>::const_reverse_iterator;
 
 		TORRENT_DEPRECATED
 		iterator file_at_offset(std::int64_t offset) const;

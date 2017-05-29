@@ -50,6 +50,11 @@ namespace libtorrent { namespace aux {
 		// pull in constructors from base class
 		using base::base;
 
+		vector(vector const&) = default;
+		vector& operator=(vector const&) = default;
+		vector(vector&&) noexcept = default;
+		vector& operator=(vector&&) noexcept = default;
+
 		auto operator[](IndexType idx) const ->
 #if TORRENT_AUTO_RETURN_TYPES
 			decltype(auto)
