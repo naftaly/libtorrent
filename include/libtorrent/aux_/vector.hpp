@@ -50,6 +50,7 @@ namespace libtorrent { namespace aux {
 		// pull in constructors from base class
 		using base::base;
 
+		vector() noexcept = default;
 		vector(vector const&) = default;
 		vector& operator=(vector const&) = default;
 		vector(vector&&) noexcept = default;
