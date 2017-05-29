@@ -50,11 +50,14 @@ namespace libtorrent { namespace aux {
 		// pull in constructors from base class
 		using base::base;
 
-		vector() noexcept = default;
+		vector() noexcept {}
 		vector(vector const&) = default;
 		vector& operator=(vector const&) = default;
-		vector(vector&&) noexcept = default;
-		vector& operator=(vector&&) noexcept = default;
+
+		// the move constructor of std::vector isn't noexcept until C++17
+		vector(vector&& rhs) noexcept : base(std::forward<base>(rhs)) {}
+		vector& operator=(vector&& rhs) noexcept
+		{ this->base::operator=(std::forward<base>(rhs)); return *this; }
 
 		auto operator[](IndexType idx) const ->
 #if TORRENT_AUTO_RETURN_TYPES
