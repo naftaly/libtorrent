@@ -77,9 +77,7 @@ namespace aux {
 		digest32() { clear(); }
 
 		digest32(digest32 const&) noexcept = default;
-		digest32(digest32&&) noexcept = default;
 		digest32& operator=(digest32 const&) noexcept = default;
-		digest32& operator=(digest32&&) noexcept = default;
 
 		// returns an all-F digest. i.e. the maximum value
 		// representable by an N bit number (N/8 bytes). This is

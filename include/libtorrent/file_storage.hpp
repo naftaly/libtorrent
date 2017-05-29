@@ -407,7 +407,7 @@ namespace libtorrent {
 		std::string const& name() const { return m_name; }
 
 		// swap all content of *this* with *ti*.
-		void swap(file_storage& ti)
+		void swap(file_storage& ti) noexcept
 		{
 			using std::swap;
 			swap(ti.m_files, m_files);
