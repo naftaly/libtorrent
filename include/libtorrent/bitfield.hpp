@@ -61,7 +61,7 @@ namespace libtorrent {
 		bitfield(int bits, bool val) { resize(bits, val); }
 		bitfield(char const* b, int bits) { assign(b, bits); }
 		bitfield(bitfield const& rhs) { assign(rhs.data(), rhs.size()); }
-		bitfield(bitfield&& rhs) = default;
+		bitfield(bitfield&& rhs) noexcept = default;
 
 		// copy bitfield from buffer ``b`` of ``bits`` number of bits, rounded up to
 		// the nearest byte boundary.
@@ -146,7 +146,7 @@ namespace libtorrent {
 			return *this;
 		}
 
-		bitfield& operator=(bitfield&& rhs) = default;
+		bitfield& operator=(bitfield&& rhs) noexcept = default;
 
 		void swap(bitfield& rhs)
 		{

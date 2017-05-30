@@ -52,6 +52,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/aux_/escape_string.hpp" // for convert_from_native
 #include "libtorrent/string_view.hpp"
 #include "libtorrent/stack_allocator.hpp"
+#include "libtorrent/aux_/noexcept_movable.hpp"
 
 #include "libtorrent/aux_/disable_warnings_push.hpp"
 #include <boost/shared_array.hpp>
@@ -111,14 +112,14 @@ namespace libtorrent {
 		virtual std::string message() const override;
 
 		// The peer's IP address and port.
-		noexcept_move_constructible<tcp::endpoint> endpoint;
+		aux::noexcept_movable<tcp::endpoint> endpoint;
 
 		// the peer ID, if known.
 		peer_id pid;
 
 #ifndef TORRENT_NO_DEPRECATE
 		// The peer's IP address and port.
-		noexcept_move_constructible<tcp::endpoint> ip;
+		aux::noexcept_movable<tcp::endpoint> ip;
 #endif
 	};
 
@@ -1205,7 +1206,7 @@ namespace libtorrent {
 		virtual std::string message() const override;
 
 		// the source address associated with the error (if any)
-		noexcept_move_constructible<udp::endpoint> endpoint;
+		aux::noexcept_movable<udp::endpoint> endpoint;
 
 		// the error code describing the error
 		error_code const error;
@@ -1226,7 +1227,7 @@ namespace libtorrent {
 		virtual std::string message() const override;
 
 		// the IP address that is believed to be our external IP
-		noexcept_move_constructible<address> external_address;
+		aux::noexcept_movable<address> external_address;
 	};
 
 	enum class socket_type_t : std::uint8_t
@@ -1295,7 +1296,7 @@ namespace libtorrent {
 
 		// the address libtorrent attempted to listen on
 		// see alert's documentation for validity of this value
-		noexcept_move_constructible<libtorrent::address> address;
+		aux::noexcept_movable<libtorrent::address> address;
 
 		// the port libtorrent attempted to listen on
 		// see alert's documentation for validity of this value
@@ -1303,7 +1304,7 @@ namespace libtorrent {
 
 #ifndef TORRENT_NO_DEPRECATE
 		// the address and port libtorrent attempted to listen on
-		noexcept_move_constructible<tcp::endpoint> endpoint;
+		aux::noexcept_movable<tcp::endpoint> endpoint;
 
 		// the type of listen socket this alert refers to.
 		socket_type_t sock_type;
@@ -1344,7 +1345,7 @@ namespace libtorrent {
 
 		// the address libtorrent ended up listening on. This address
 		// refers to the local interface.
-		noexcept_move_constructible<libtorrent::address> address;
+		aux::noexcept_movable<libtorrent::address> address;
 
 		// the port libtorrent ended up listening on.
 		int const port;
@@ -1355,7 +1356,7 @@ namespace libtorrent {
 #ifndef TORRENT_NO_DEPRECATE
 		// the endpoint libtorrent ended up listening on. The address
 		// refers to the local interface and the port is the listen port.
-		noexcept_move_constructible<tcp::endpoint> endpoint;
+		aux::noexcept_movable<tcp::endpoint> endpoint;
 
 		// the type of listen socket this alert refers to.
 		socket_type_t sock_type;
@@ -1546,7 +1547,7 @@ namespace libtorrent {
 		static const int static_category = alert::dht_notification;
 		virtual std::string message() const override;
 
-		noexcept_move_constructible<address> ip;
+		aux::noexcept_movable<address> ip;
 		int port;
 		sha1_hash info_hash;
 	};
@@ -1792,11 +1793,11 @@ namespace libtorrent {
 		int const socket_type;
 
 		// is the IP address and port the connection came from.
-		noexcept_move_constructible<tcp::endpoint> endpoint;
+		aux::noexcept_movable<tcp::endpoint> endpoint;
 
 #ifndef TORRENT_NO_DEPRECATE
 		// is the IP address and port the connection came from.
-		noexcept_move_constructible<tcp::endpoint> TORRENT_DEPRECATED_MEMBER ip;
+		aux::noexcept_movable<tcp::endpoint> TORRENT_DEPRECATED_MEMBER ip;
 #endif
 	};
 
@@ -2120,11 +2121,11 @@ namespace libtorrent {
 		sha1_hash obfuscated_info_hash;
 
 		// the endpoint we're sending this query to
-		noexcept_move_constructible<udp::endpoint> endpoint;
+		aux::noexcept_movable<udp::endpoint> endpoint;
 
 #ifndef TORRENT_NO_DEPRECATE
 		// the endpoint we're sending this query to
-		noexcept_move_constructible<udp::endpoint> TORRENT_DEPRECATED_MEMBER ip;
+		aux::noexcept_movable<udp::endpoint> TORRENT_DEPRECATED_MEMBER ip;
 #endif
 	};
 
@@ -2406,7 +2407,7 @@ namespace libtorrent {
 
 		// the DHT node we received this packet from, or sent this packet to
 		// (depending on ``direction``).
-		noexcept_move_constructible<udp::endpoint> node;
+		aux::noexcept_movable<udp::endpoint> node;
 
 #ifndef TORRENT_NO_DEPRECATE
 		direction_t TORRENT_DEPRECATED_MEMBER dir;
@@ -2464,12 +2465,12 @@ namespace libtorrent {
 		virtual std::string message() const override;
 
 		void const* userdata;
-		noexcept_move_constructible<udp::endpoint> endpoint;
+		aux::noexcept_movable<udp::endpoint> endpoint;
 
 		bdecode_node response() const;
 
 #ifndef TORRENT_NO_DEPRECATE
-		noexcept_move_constructible<udp::endpoint> TORRENT_DEPRECATED_MEMBER addr;
+		aux::noexcept_movable<udp::endpoint> TORRENT_DEPRECATED_MEMBER addr;
 #endif
 
 	private:

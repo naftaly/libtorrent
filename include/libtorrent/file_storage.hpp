@@ -45,6 +45,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include "libtorrent/sha1_hash.hpp"
 #include "libtorrent/string_view.hpp"
 #include "libtorrent/aux_/vector.hpp"
+#include "libtorrent/aux_/noexcept_movable.hpp"
 
 namespace libtorrent {
 
@@ -600,7 +601,7 @@ namespace libtorrent {
 
 		// name of torrent. For multi-file torrents
 		// this is always the root directory
-		std::string m_name;
+		aux::noexcept_movable<std::string> m_name;
 
 		// the sum of all file sizes
 		std::int64_t m_total_size;

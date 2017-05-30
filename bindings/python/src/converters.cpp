@@ -252,12 +252,12 @@ void bind_converters()
     to_python_converter<lt::file_index_t, from_strong_typedef<lt::file_index_t>>();
 
     // work-around types
-    to_python_converter<lt::noexcept_move_constructible<lt::address>, address_to_tuple<
-        lt::noexcept_move_constructible<lt::address>>>();
-    to_python_converter<lt::noexcept_move_constructible<lt::tcp::endpoint>, endpoint_to_tuple<
-        lt::noexcept_move_constructible<lt::tcp::endpoint>>>();
-    to_python_converter<lt::noexcept_move_constructible<lt::udp::endpoint>, endpoint_to_tuple<
-        lt::noexcept_move_constructible<lt::udp::endpoint>>>();
+    to_python_converter<lt::noexcept_movable<lt::address>, address_to_tuple<
+        lt::noexcept_movable<lt::address>>>();
+    to_python_converter<lt::noexcept_movable<lt::tcp::endpoint>, endpoint_to_tuple<
+        lt::noexcept_movable<lt::tcp::endpoint>>>();
+    to_python_converter<lt::noexcept_movable<lt::udp::endpoint>, endpoint_to_tuple<
+        lt::noexcept_movable<lt::udp::endpoint>>>();
 
     // python -> C++ conversions
     tuple_to_pair<int, int>();
