@@ -47,7 +47,7 @@ namespace aux {
 			: T(std::forward<T>(rhs))
 		{}
 		noexcept_movable(noexcept_movable<T> const& rhs)
-			: T(rhs)
+			: T(static_cast<T const&>(rhs))
 		{}
 		noexcept_movable(T&& rhs) noexcept : T(std::forward<T>(rhs)) {}
 		noexcept_movable(T const& rhs) : T(rhs) {}
