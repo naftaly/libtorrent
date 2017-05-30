@@ -53,7 +53,7 @@ namespace libtorrent {
 	struct TORRENT_EXPORT torrent_status
 	{
 		// hidden
-		torrent_status() noexcept;
+		torrent_status();
 		~torrent_status();
 		torrent_status(torrent_status const&);
 		torrent_status& operator=(torrent_status const&);
