@@ -56,7 +56,7 @@ namespace libtorrent {
 		// The constructor taking a pointer ``b`` and ``bits`` copies a bitfield
 		// from the specified buffer, and ``bits`` number of bits (rounded up to
 		// the nearest byte boundary).
-		bitfield() = default;
+		bitfield() noexcept = default;
 		explicit bitfield(int bits) { resize(bits); }
 		bitfield(int bits, bool val) { resize(bits, val); }
 		bitfield(char const* b, int bits) { assign(b, bits); }
@@ -256,9 +256,35 @@ namespace libtorrent {
 		aux::unique_ptr<std::uint32_t[]> m_buf;
 	};
 
+	static_assert(std::is_nothrow_move_constructible<bitfield>::value
+		, "should be nothrow move constructible");
+	static_assert(std::is_nothrow_move_assignable<bitfield>::value
+		, "should be nothrow move assignable");
+	static_assert(std::is_nothrow_default_constructible<bitfield>::value
+		, "should be nothrow default constructible");
+
 	template <typename IndexType>
 	struct typed_bitfield : bitfield
 	{
+		typed_bitfield() noexcept {}
+		typed_bitfield(typed_bitfield&& rhs) noexcept
+			: bitfield(std::forward<bitfield>(rhs))
+		{}
+		typed_bitfield(typed_bitfield const& rhs)
+			: bitfield(static_cast<bitfield const&>(rhs))
+		{}
+		typed_bitfield(bitfield&& rhs) noexcept : bitfield(std::forward<bitfield>(rhs)) {}
+		typed_bitfield(bitfield const& rhs) : bitfield(rhs) {}
+		typed_bitfield& operator=(typed_bitfield&& rhs) noexcept
+		{
+			this->bitfield::operator=(std::forward<bitfield>(rhs));
+			return *this;
+		}
+		typed_bitfield& operator=(typed_bitfield const& rhs)
+		{
+			this->bitfield::operator=(rhs);
+			return *this;
+		}
 		using bitfield::bitfield;
 
 		bool operator[](IndexType const index) const
@@ -275,6 +301,13 @@ namespace libtorrent {
 
 		IndexType end_index() const { return IndexType(this->size()); }
 	};
+
+	static_assert(std::is_nothrow_move_constructible<typed_bitfield<int>>::value
+		, "should be nothrow move constructible");
+	static_assert(std::is_nothrow_move_assignable<typed_bitfield<int>>::value
+		, "should be nothrow move assignable");
+	static_assert(std::is_nothrow_default_constructible<typed_bitfield<int>>::value
+		, "should be nothrow default constructible");
 
 }
 

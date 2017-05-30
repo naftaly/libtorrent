@@ -53,7 +53,7 @@ namespace libtorrent {
 	struct TORRENT_EXPORT torrent_status
 	{
 		// hidden
-		torrent_status();
+		torrent_status() noexcept;
 		~torrent_status();
 		torrent_status(torrent_status const&);
 		torrent_status& operator=(torrent_status const&);
@@ -558,6 +558,15 @@ namespace libtorrent {
 		seconds finished_duration;
 		seconds seeding_duration;
 	};
+
+	static_assert(std::is_nothrow_move_constructible<torrent_status>::value
+		, "should be nothrow move constructible");
+	static_assert(std::is_nothrow_move_assignable<torrent_status>::value
+		, "should be nothrow move assignable");
+
+	// TODO: it would be nice to have this be nothrow default constructible
+//	static_assert(std::is_nothrow_default_constructible<torrent_status>::value
+//		, "should be nothrow default constructible");
 }
 
 namespace std

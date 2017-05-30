@@ -257,7 +257,7 @@ namespace libtorrent { namespace aux {
 
 		// constructs a torrent handle that does not refer to a torrent.
 		// i.e. is_valid() will return false.
-		torrent_handle() {}
+		torrent_handle() noexcept {}
 
 		torrent_handle(torrent_handle const& t) = default;
 		torrent_handle(torrent_handle&& t) noexcept = default;
@@ -1306,9 +1306,14 @@ namespace libtorrent { namespace aux {
 		{ if (!t.expired()) m_torrent = t; }
 
 		std::weak_ptr<torrent> m_torrent;
-
 	};
 
+	static_assert(std::is_nothrow_move_constructible<torrent_handle>::value
+		, "should be nothrow move constructible");
+	static_assert(std::is_nothrow_move_assignable<torrent_handle>::value
+		, "should be nothrow move assignable");
+	static_assert(std::is_nothrow_default_constructible<torrent_handle>::value
+		, "should be nothrow default constructible");
 }
 
 namespace std

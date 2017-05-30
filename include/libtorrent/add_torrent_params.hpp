@@ -523,6 +523,12 @@ namespace libtorrent {
 
 	static_assert(std::is_nothrow_move_constructible<add_torrent_params>::value
 		, "should be nothrow move constructible");
+	static_assert(std::is_nothrow_move_assignable<add_torrent_params>::value
+		, "should be nothrow move assignable");
+
+	// TODO: it would be nice if this was nothrow default constructible
+//	static_assert(std::is_nothrow_default_constructible<add_torrent_params>::value
+//		, "should be nothrow default constructible");
 }
 
 #endif
