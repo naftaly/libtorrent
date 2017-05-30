@@ -299,7 +299,7 @@ namespace libtorrent {
 		// to the session (if DHT is enabled). The hostname may be an IP address.
 		aux::noexcept_movable<std::vector<std::pair<std::string, int>>> dht_nodes;
 
-		aux::noexcept_movable<std::string> name;
+		std::string name;
 
 		// the path where the torrent is or will be stored.
 		//
@@ -310,7 +310,7 @@ namespace libtorrent {
 		//
 		// Setting this to an absolute path is slightly more performant than a
 		// relative path.
-		aux::noexcept_movable<std::string> save_path;
+		std::string save_path;
 
 		// One of the values from storage_mode_t. For more information, see
 		// storage-allocation_.
@@ -347,7 +347,7 @@ namespace libtorrent {
 		// default this is empty, and no tracker ID is used, since this is an
 		// optional argument. If a tracker returns a tracker ID, that ID is used
 		// instead of this.
-		aux::noexcept_movable<std::string> trackerid;
+		std::string trackerid;
 
 		// flags controlling aspects of this torrent and how it's added. See
 		// flags_t for details.
@@ -488,13 +488,13 @@ namespace libtorrent {
 		// until the .torrent file has been downloaded. If there is any error
 		// while downloading, the torrent will be stopped and the torrent error
 		// state (``torrent_status::error``) will indicate what went wrong.
-		aux::noexcept_movable<std::string> TORRENT_DEPRECATED_MEMBER url;
+		std::string TORRENT_DEPRECATED_MEMBER url;
 
 		// if ``uuid`` is specified, it is used to find duplicates. If another
 		// torrent is already running with the same UUID as the one being added,
 		// it will be considered a duplicate. This is mainly useful for RSS feed
 		// items which has UUIDs specified.
-		aux::noexcept_movable<std::string> TORRENT_DEPRECATED_MEMBER uuid;
+		std::string TORRENT_DEPRECATED_MEMBER uuid;
 
 		// The optional parameter, ``resume_data`` can be given if up to date
 		// fast-resume data is available. The fast-resume data can be acquired
@@ -512,9 +512,9 @@ namespace libtorrent {
 #else
 		// hidden
 		// to maintain ABI compatibility
-		aux::noexcept_movable<std::string> deprecated5;
-		aux::noexcept_movable<std::string> deprecated1;
-		aux::noexcept_movable<std::string> deprecated2;
+		std::string deprecated5;
+		std::string deprecated1;
+		std::string deprecated2;
 		aux::noexcept_movable<std::vector<char>> deprecated3;
 		error_code deprecated4;
 #endif

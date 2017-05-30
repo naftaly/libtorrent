@@ -122,10 +122,10 @@ namespace libtorrent {
 		// if the error is attributed specifically to a file, error_file is set to
 		// the index of that file in the .torrent file.
 #ifndef TORRENT_NO_DEPRECATE
-		aux::noexcept_movable<std::string> error;
+		std::string error;
 #else
 		// internal
-		aux::noexcept_movable<std::string> _dummy_string_;
+		std::string _dummy_string_;
 #endif
 		error_code errc;
 
@@ -155,7 +155,7 @@ namespace libtorrent {
 		// add_torrent() when this torrent was started. This field is only
 		// included if the torrent status is queried with
 		// ``torrent_handle::query_save_path``.
-		aux::noexcept_movable<std::string> save_path;
+		std::string save_path;
 
 		// the name of the torrent. Typically this is derived from the
 		// .torrent file. In case the torrent was started without metadata,
@@ -163,7 +163,7 @@ namespace libtorrent {
 		// to it when added to the session. See ``session::add_torrent``.
 		// This field is only included if the torrent status is queried
 		// with ``torrent_handle::query_name``.
-		aux::noexcept_movable<std::string> name;
+		std::string name;
 
 		// set to point to the ``torrent_info`` object for this torrent. It's
 		// only included if the torrent status is queried with
@@ -184,7 +184,7 @@ namespace libtorrent {
 
 		// the URL of the last working tracker. If no tracker request has
 		// been successful yet, it's set to an empty string.
-		aux::noexcept_movable<std::string> current_tracker;
+		std::string current_tracker;
 
 		// the number of bytes downloaded and uploaded to all peers, accumulated,
 		// *this session* only. The session is considered to restart when a
