@@ -191,7 +191,7 @@ struct TORRENT_EXTRA_EXPORT utp_stream
 	~utp_stream();
 	utp_stream& operator=(utp_stream const&) = delete;
 	utp_stream(utp_stream const&) = delete;
-	utp_stream& operator=(utp_stream&&) = default;
+	//utp_stream& operator=(utp_stream&&) = default;
 	utp_stream(utp_stream&&) = default;
 
 	lowest_layer_type& lowest_layer() { return *this; }

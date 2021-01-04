@@ -116,18 +116,18 @@ namespace libtorrent {
 	{
 	public:
 
-		// The constructor that takes an info-hash  will initialize the info-hash
-		// to the given value, but leave all other fields empty. This is used
-		// internally when downloading torrents without the metadata. The
-		// metadata will be created by libtorrent as soon as it has been
-		// downloaded from the swarm.
-		//
-		// The constructor that takes a bdecode_node will create a torrent_info
-		// object from the information found in the given torrent_file. The
-		// bdecode_node represents a tree node in an bencoded file. To load an
-		// ordinary .torrent file into a bdecode_node, use bdecode().
-		//
-		// The version that takes a buffer pointer and a size will decode it as a
+        // The constructor that takes an info-hash  will initialize the info-hash
+        // to the given value, but leave all other fields empty. This is used
+        // internally when downloading torrents without the metadata. The
+        // metadata will be created by libtorrent as soon as it has been
+        // downloaded from the swarm.
+        //
+        // The constructor that takes a bdecode_node will create a torrent_info
+        // object from the information found in the given torrent_file. The
+        // bdecode_node represents a tree node in an bencoded file. To load an
+        // ordinary .torrent file into a bdecode_node, use bdecode().
+        //
+        // The version that takes a buffer pointer and a size will decode it as a
 		// .torrent file and initialize the torrent_info object for you.
 		//
 		// The version that takes a filename will simply load the torrent file

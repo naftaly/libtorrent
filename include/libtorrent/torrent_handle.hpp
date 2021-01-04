@@ -247,7 +247,7 @@ namespace libtorrent { namespace aux {
 		// apply-ip-filter, pinned, sequential-download,
 		// seed-mode
 		// with just set_flags() and clear_flags() using the flags from
-		// add_torrent_params. Perhaps those flags should have a more generic
+		// ∂. Perhaps those flags should have a more generic
 		// name.
 
 		friend struct aux::session_impl;

@@ -3695,8 +3695,10 @@ namespace libtorrent {
 		TORRENT_ASSERT(is_single_thread());
 
 		if (m_abort) return;
-
-		bool const passed = settings().get_bool(settings_pack::disable_hash_checks)
+        
+        bool dhc = settings().get_bool(settings_pack::disable_hash_checks);
+        bool isWebSeed = m_web_seeds.size() > 0;
+		bool const passed = isWebSeed || dhc
 			|| (!error && sha1_hash(piece_hash) == m_torrent_file->hash_for_piece(piece));
 
 		bool const disk_error = !passed && error;

@@ -49,7 +49,10 @@ namespace libtorrent { namespace aux {
 
 		// pull in constructors from base class
 		using base::base;
-
+        
+        typed_span(const typed_span::base &S) : typed_span::base(S) {}
+        //typed_span(const span<T> &S) : typed_span::base(S) {}
+        
 		auto operator[](IndexType idx) const ->
 #if TORRENT_AUTO_RETURN_TYPES
 			decltype(auto)
@@ -72,7 +75,7 @@ namespace libtorrent { namespace aux {
 		typed_span first(underlying_index n) const
 		{
 			TORRENT_ASSERT(n >= 0);
-			return this->base::first(std::size_t(n));
+            return this->base::first(std::size_t(n));
 		}
 
 		typed_span first(std::size_t n) const
@@ -99,8 +102,8 @@ namespace libtorrent { namespace aux {
 			= typename std::enable_if<std::is_signed<U>::value>::type>
 		typed_span subspan(underlying_index offset) const
 		{
-			TORRENT_ASSERT(offset >= 0);
-			return this->base::subspan(std::size_t(offset));
+            TORRENT_ASSERT(offset >= 0);
+            return this->base::subspan(std::size_t(offset));
 		}
 
 		template <typename U = underlying_index, typename Cond

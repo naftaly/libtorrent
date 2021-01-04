@@ -429,12 +429,12 @@ namespace libtorrent {
 		// is set, these will be the _only_ ones to be used. i.e. any web seeds
 		// found in the .torrent file will be overridden.
 		//
-		// http_seeds expects URLs to web servers implementing the original HTTP
-		// seed specification `BEP 17`_.
-		//
-		// url_seeds expects URLs to regular web servers, aka "get right" style,
-		// specified in `BEP 19`_.
-		std::vector<std::string> http_seeds;
+        // http_seeds expects URLs to web servers implementing the original HTTP
+        // seed specification `BEP 17`_.
+        //
+        // url_seeds expects URLs to regular web servers, aka "get right" style,
+        // specified in `BEP 19`_.
+        std::vector<std::string> http_seeds;
 		std::vector<std::string> url_seeds;
 
 		// peers to add to the torrent, to be tried to be connected to as

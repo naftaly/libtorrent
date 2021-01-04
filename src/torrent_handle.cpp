@@ -438,7 +438,7 @@ namespace libtorrent {
 		aux::vector<int, piece_index_t> ret;
 		auto retp = &ret;
 		sync_call(&torrent::piece_priorities, retp);
-		return ret;
+        return std::move(ret);
 	}
 
 	void torrent_handle::file_priority(file_index_t index, int priority) const
@@ -462,7 +462,7 @@ namespace libtorrent {
 		aux::vector<int, file_index_t> ret;
 		auto retp = &ret;
 		sync_call(&torrent::file_priorities, retp);
-		return ret;
+        return std::move(ret);
 	}
 
 #ifndef TORRENT_NO_DEPRECATE
